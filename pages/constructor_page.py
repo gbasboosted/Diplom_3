@@ -38,9 +38,30 @@ class ConstructorPage(BasePage):
 
     @allure.step("Перетащить ингредиент в конструктор")
     def add_ingredient(self, locator):
+        self.wait_overlays_closed()
         source = self._ingredient_card(locator)
         target = self.visible(ConstructorLocators.DROP_AREA)
-        ActionChains(self.driver).drag_and_drop(source, target).perform()
+        if self.driver.capabilities["browserName"] == "firefox":
+            # Gecko не запускает HTML5 drag-and-drop приложения через pointer actions.
+            # Отправляем настоящие DOM DragEvent с общим DataTransfer; состояние
+            # приложения меняют только его собственные обработчики событий.
+            self.driver.execute_script("""
+                const [source, target] = arguments;
+                const dataTransfer = new DataTransfer();
+                const rect = target.getBoundingClientRect();
+                const options = {
+                    bubbles: true, cancelable: true, dataTransfer,
+                    clientX: rect.x + rect.width / 2,
+                    clientY: rect.y + rect.height / 2,
+                };
+                source.dispatchEvent(new DragEvent('dragstart', options));
+                target.dispatchEvent(new DragEvent('dragenter', options));
+                target.dispatchEvent(new DragEvent('dragover', options));
+                target.dispatchEvent(new DragEvent('drop', options));
+                source.dispatchEvent(new DragEvent('dragend', options));
+            """, source, target)
+        else:
+            ActionChains(self.driver).drag_and_drop(source, target).perform()
 
     @allure.step("Добавить первую начинку в заказ")
     def add_first_filling(self):

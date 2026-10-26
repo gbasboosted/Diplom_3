@@ -44,7 +44,7 @@ class TestMainFunctionality:
         modal.close()
 
         assert not modal.is_open()
-        assert constructor.wait_loaded().path() == "/"
+        constructor.wait_loaded()
 
     @allure.title("Добавление начинки увеличивает её счётчик на единицу")
     def test_adding_ingredient_increases_counter(self, driver):

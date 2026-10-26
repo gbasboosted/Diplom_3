@@ -2,7 +2,7 @@ import os
 
 
 BASE_URL = os.getenv(
-    "STELLAR_BURGERS_URL", "https://stellarburgers.education-services.ru"
+    "STELLAR_BURGERS_URL", "https://qa-stellarburgers.education-services.ru"
 ).rstrip("/")
 WAIT_TIMEOUT = float(os.getenv("UI_WAIT_TIMEOUT", "20"))
 PAGE_LOAD_TIMEOUT = float(os.getenv("PAGE_LOAD_TIMEOUT", "30"))

@@ -2,7 +2,8 @@ from selenium.webdriver.common.by import By
 
 
 class ModalLocators:
-    ROOT = (By.CSS_SELECTOR, "[class*='Modal_modal__'], [class*='modal_modal__']")
+    OVERLAYS = (By.CSS_SELECTOR, "div[class*='Modal_modal_overlay']")
+    ROOT = (By.CSS_SELECTOR, "section[class*='Modal_modal__']")
     TITLE = (
         By.XPATH,
         ".//*[self::h2 or self::h3][normalize-space()='Детали ингредиента']",

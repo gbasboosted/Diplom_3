@@ -8,6 +8,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from config import BASE_URL, WAIT_TIMEOUT
 from locators.header_locators import HeaderLocators
+from locators.modal_locators import ModalLocators
 
 
 class BasePage:
@@ -31,7 +32,13 @@ class BasePage:
         return self.wait.until(EC.visibility_of_element_located(locator))
 
     def click(self, locator):
+        self.wait_overlays_closed()
         self.wait.until(EC.element_to_be_clickable(locator)).click()
+
+    def wait_overlays_closed(self):
+        self.wait.until(lambda driver: not any(
+            overlay.is_displayed() for overlay in driver.find_elements(*ModalLocators.OVERLAYS)
+        ))
 
     def path(self):
         return urlparse(self.driver.current_url).path
