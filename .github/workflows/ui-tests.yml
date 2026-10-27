@@ -1,0 +1,55 @@
+name: Stellar Burgers UI
+
+on:
+  push:
+    branches: [develop3]
+    paths-ignore: ['README.md', 'allure-results/**', 'reports/**']
+  pull_request:
+    branches: [main]
+    paths-ignore: ['README.md', 'allure-results/**', 'reports/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ui-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PAGE_LOAD_TIMEOUT: '10'
+      UI_WAIT_TIMEOUT: '10'
+      API_TIMEOUT: '10'
+      SE_AVOID_STATS: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+      - name: Install test dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Run all 16 UI cases in Chrome and Firefox
+        run: python -m pytest --browser chrome --browser firefox --tb=short
+      - uses: actions/setup-node@v4
+        if: always()
+        with:
+          node-version: '24'
+      - uses: pnpm/action-setup@v4
+        if: always()
+        with:
+          version: '11.25.0'
+      - name: Generate combined Allure report
+        if: always()
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run report
+      - name: Upload Allure report and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-ui-report
+          path: |
+            allure-results/
+            reports/allure/
+          retention-days: 30
