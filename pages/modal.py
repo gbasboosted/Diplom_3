@@ -1,6 +1,4 @@
 import allure
-from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
-from selenium.webdriver.support.ui import WebDriverWait
 
 from config import ORDER_TIMEOUT
 from locators.modal_locators import ModalLocators
@@ -8,46 +6,30 @@ from pages.base_page import BasePage
 
 
 class Modal(BasePage):
-    def _visible_root(self, driver):
-        return next(
-            (item for item in driver.find_elements(*ModalLocators.ROOT) if item.is_displayed()),
-            False,
-        )
-
+    @allure.step("Дождаться видимого всплывающего окна")
     def root(self):
-        return self.wait.until(self._visible_root)
+        return self.visible(ModalLocators.ROOT)
 
     @allure.step("Прочитать заголовок окна ингредиента")
     def ingredient_title(self):
-        return self.root().find_element(*ModalLocators.TITLE).text
+        return self.text(ModalLocators.TITLE, parent=ModalLocators.ROOT)
 
     @allure.step("Прочитать название ингредиента в окне")
     def ingredient_name(self):
-        return self.root().find_element(*ModalLocators.INGREDIENT_NAME).text
+        return self.text(ModalLocators.INGREDIENT_NAME, parent=ModalLocators.ROOT)
 
     @allure.step("Закрыть всплывающее окно крестиком")
     def close(self):
-        self.root().find_element(*ModalLocators.CLOSE).click()
-        self.wait.until(lambda _: not self.is_open())
+        self.click(ModalLocators.CLOSE, parent=ModalLocators.ROOT, wait_for_overlays=False)
+        self.wait_until(lambda: not self.is_open())
 
+    @allure.step("Проверить, открыто ли всплывающее окно")
     def is_open(self):
-        return any(item.is_displayed() for item in self.driver.find_elements(*ModalLocators.ROOT))
+        return self.is_visible(ModalLocators.ROOT)
 
     @allure.step("Дождаться номера оформленного заказа")
     def order_number(self):
-        def confirmed_number(_):
-            try:
-                modal = self._visible_root(self.driver)
-                if not modal:
-                    return False
-                if not modal.find_element(*ModalLocators.ORDER_CONFIRMED).is_displayed():
-                    return False
-                text = modal.find_element(*ModalLocators.ORDER_NUMBER).text.strip()
-                # 9999 — временное значение в окне до получения номера от сервера.
-                return int(text) if text.isdigit() and int(text) not in (0, 9999) else False
-            except NoSuchElementException:
-                return False
-
-        return WebDriverWait(
-            self.driver, ORDER_TIMEOUT, ignored_exceptions=(StaleElementReferenceException,),
-        ).until(confirmed_number)
+        return self.number(
+            ModalLocators.ORDER_NUMBER, parent=ModalLocators.ROOT,
+            excluded=(0, 9999), ready=ModalLocators.ORDER_CONFIRMED, timeout=ORDER_TIMEOUT,
+        )

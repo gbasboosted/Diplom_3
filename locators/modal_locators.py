@@ -9,11 +9,7 @@ class ModalLocators:
         ".//*[self::h2 or self::h3][normalize-space()='Детали ингредиента']",
     )
     INGREDIENT_NAME = (By.CSS_SELECTOR, ".text_type_main-medium")
-    CLOSE = (
-        By.XPATH,
-        ".//button[@aria-label='Закрыть' or contains(@class, 'close') "
-        "or contains(@class, 'Close') or .//*[local-name()='svg']][1]",
-    )
+    CLOSE = (By.CSS_SELECTOR, "button[type='button'][class*='Modal_modal__close__']")
     ORDER_NUMBER = (
         By.XPATH,
         ".//*[self::h2 or self::p][contains(@class, 'text_type_digits-large')]",

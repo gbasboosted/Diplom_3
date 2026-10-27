@@ -1,8 +1,6 @@
 import json
 import platform
-import secrets
 from pathlib import Path
-from uuid import uuid4
 
 import allure
 import pytest
@@ -10,6 +8,9 @@ import requests
 
 from browsers import build_driver
 from config import API_TIMEOUT, BASE_URL, PAGE_LOAD_TIMEOUT, WAIT_TIMEOUT
+from helpers import make_user
+from pages.base_page import BasePage
+from pages.constructor_page import ConstructorPage
 from pages.login_page import LoginPage
 
 
@@ -47,18 +48,13 @@ def driver(browser_name, pytestconfig):
 
 @pytest.fixture
 def test_user():
-    identifier = uuid4().hex
-    data = {
-        "email": f"stellar-ui-{identifier}@example.com",
-        "name": f"UI {identifier[:8]}",
-        "password": secrets.token_urlsafe(18),
-    }
+    data = make_user()
     session = requests.Session()
     token = None
     try:
         with allure.step("Создать уникального тестового пользователя через API"):
             response = session.post(
-                f"{BASE_URL}/api/auth/register", json=data, timeout=API_TIMEOUT,
+                f"{BASE_URL}/api/auth/register", json=data.as_payload(), timeout=API_TIMEOUT,
             )
             assert response.status_code == 200, f"Регистрация: HTTP {response.status_code}"
             body = response.json()
@@ -82,7 +78,10 @@ def test_user():
 
 @pytest.fixture
 def authenticated_constructor(driver, test_user):
-    return LoginPage(driver).login(test_user)
+    LoginPage(driver).login(test_user)
+    constructor = ConstructorPage(driver).wait_loaded()
+    assert constructor.is_authenticated()
+    return constructor
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -93,16 +92,7 @@ def pytest_runtest_makereport(item, call):
         browser = item.funcargs.get("driver")
         if browser is not None:
             try:
-                allure.attach(browser.get_screenshot_as_png(), "Снимок при ошибке", allure.attachment_type.PNG)
-                # Копия DOM без значений полей и скриптов: секреты не попадают в отчёт.
-                html = browser.execute_script("""
-                    const copy = document.documentElement.cloneNode(true);
-                    copy.querySelectorAll('input').forEach(input => input.removeAttribute('value'));
-                    copy.querySelectorAll('script').forEach(script => script.remove());
-                    return copy.outerHTML;
-                """)
-                allure.attach(html, "DOM при ошибке", allure.attachment_type.HTML)
-                allure.attach(browser.current_url, "URL при ошибке", allure.attachment_type.TEXT)
+                BasePage(browser).attach_failure_diagnostics()
             except Exception as error:
                 allure.attach(type(error).__name__, "Ошибка сохранения диагностики", allure.attachment_type.TEXT)
 

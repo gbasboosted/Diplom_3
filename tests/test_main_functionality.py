@@ -2,6 +2,7 @@ import allure
 
 from pages.constructor_page import ConstructorPage
 from pages.feed_page import FeedPage
+from pages.modal import Modal
 
 
 @allure.epic("Stellar Burgers UI")
@@ -28,9 +29,10 @@ class TestMainFunctionality:
     @allure.title("Клик по ингредиенту открывает окно с его деталями")
     def test_click_ingredient_opens_details(self, driver):
         constructor = ConstructorPage(driver).open().wait_loaded()
-        expected_name = constructor.first_bun_name()
+        expected_name = constructor.bun_name()
 
-        modal = constructor.open_first_bun_details()
+        constructor.open_bun_details()
+        modal = Modal(driver)
 
         assert modal.ingredient_title() == "Детали ингредиента"
         assert modal.ingredient_name() == expected_name
@@ -38,19 +40,21 @@ class TestMainFunctionality:
     @allure.title("Окно с деталями ингредиента закрывается крестиком")
     def test_ingredient_details_close_by_cross(self, driver):
         constructor = ConstructorPage(driver).open().wait_loaded()
-        modal = constructor.open_first_bun_details()
+        constructor.open_bun_details()
+        modal = Modal(driver)
+        modal.root()
         assert modal.is_open()
 
         modal.close()
 
-        assert not modal.is_open()
         constructor.wait_loaded()
+        assert not modal.is_open()
 
     @allure.title("Добавление начинки увеличивает её счётчик на единицу")
     def test_adding_ingredient_increases_counter(self, driver):
         constructor = ConstructorPage(driver).open().wait_loaded()
         before = constructor.filling_count()
 
-        constructor.add_first_filling()
+        constructor.add_filling()
 
         assert constructor.wait_filling_count(before + 1) == before + 1
