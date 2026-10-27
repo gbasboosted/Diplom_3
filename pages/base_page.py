@@ -100,7 +100,9 @@ class BasePage:
     @allure.step("Прокрутить страницу к элементу {locator}")
     def scroll_to(self, locator):
         element = self.visible(locator)
-        self._driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+        self._driver.execute_script(
+            "arguments[0].scrollIntoView({block: 'center', behavior: 'instant'});", element,
+        )
 
     @allure.step("Дождаться исчезновения загрузочных подложек")
     def wait_overlays_closed(self):
@@ -148,7 +150,17 @@ class BasePage:
                 source.dispatchEvent(new DragEvent('dragend', options));
             """, source, target)
         else:
-            ActionChains(self._driver).drag_and_drop(source, target).perform()
+            # Отдельный начальный сдвиг запускает dragstart до движения к корзине.
+            (ActionChains(self._driver)
+             .move_to_element(source)
+             .click_and_hold()
+             .pause(0.2)
+             .move_by_offset(10, 0)
+             .pause(0.2)
+             .move_to_element(target)
+             .pause(0.2)
+             .release()
+             .perform())
 
     @allure.step("Получить идентификатор текущей вкладки")
     def current_tab(self):
