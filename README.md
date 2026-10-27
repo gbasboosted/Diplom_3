@@ -132,7 +132,7 @@ allure serve allure-results
 После исправления замечаний ревьюера выполнена команда
 `python -m pytest --browser chrome --browser firefox --tb=short`
 на https://qa-stellarburgers.education-services.ru/.
-Результат: **16 passed** — по 8 проверок в Chrome 156.0.8078.47
+Результат: **16 passed** — по 8 проверок в Chrome 156.0.8078.48
 и Firefox 158.0.1. Пройдены все сценарии: навигация, открытие и закрытие
 деталей, добавление начинки, оба счётчика ленты и появление своего номера «В работе».
 Подготовка и удаление пользователей прошли без ошибок. В `allure-results/`
